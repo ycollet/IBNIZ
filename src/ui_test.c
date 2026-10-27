@@ -58,7 +58,7 @@ void testaudio()
   assert(SDL_ClearAudioStream(sdl.audio));
 }
 
-void testevents()
+void testevents(SDL_Keymod clipboardmod)
 {
   SDL_Event e={0};
   SDL_FlushEvents(SDL_EVENT_FIRST,SDL_EVENT_LAST);
@@ -75,9 +75,9 @@ void testevents()
   assert(SDL_PushEvent(&e));
   pushkey(SDLK_UP,SDL_KMOD_CTRL);
   pushkey(SDLK_LEFT,SDL_KMOD_SHIFT);
-  pushkey(SDLK_C,SDL_KMOD_CTRL);
+  pushkey(SDLK_C,clipboardmod);
   pushkey(SDLK_RIGHT,0);
-  pushkey(SDLK_V,SDL_KMOD_CTRL);
+  pushkey(SDLK_V,clipboardmod);
 
   e.type=SDL_EVENT_WINDOW_RESIZED;
   e.window.data1=800;
@@ -109,13 +109,49 @@ void testevents()
   clipboard=NULL;
 }
 
+void testexternalclipboard(SDL_Keymod mod)
+{
+  const char*expression="dd* +\nA /";
+  char*text;
+  SDL_FlushEvents(SDL_EVENT_FIRST,SDL_EVENT_LAST);
+  ui.osd_visible=1;
+  ui.runstat=0;
+  clipboard=strdup("stale internal clipboard");
+  assert(clipboard);
+  assert(SDL_SetClipboardText(expression));
+  pushkey(SDLK_A,mod);
+  pushkey(SDLK_V,mod);
+  pushkey(SDLK_ESCAPE,0);
+  interactivemode("old expression");
+  assert(strcmp(ed.textbuffer,expression)==0);
+  free(ed.textbuffer);
+
+  SDL_FlushEvents(SDL_EVENT_FIRST,SDL_EVENT_LAST);
+  pushkey(SDLK_A,mod);
+  pushkey(SDLK_X,mod);
+  pushkey(SDLK_ESCAPE,0);
+  interactivemode("dd+");
+  assert(strcmp(ed.textbuffer,"")==0);
+  text=SDL_GetClipboardText();
+  assert(text && strcmp(text,"dd+")==0);
+  SDL_free(text);
+  free(ed.textbuffer);
+  free(clipboard);
+  clipboard=NULL;
+}
+
 int main(void)
 {
   SDL_SetMainReady();
   initsdl();
   testvideo();
   testaudio();
-  testevents();
+  testevents(SDL_KMOD_CTRL);
+  testexternalclipboard(SDL_KMOD_CTRL);
+#ifdef SDL_PLATFORM_MACOS
+  testevents(SDL_KMOD_GUI);
+  testexternalclipboard(SDL_KMOD_GUI);
+#endif
   assert(playbackkey(273)==SDLK_UP);
   assert(recordingkey(SDLK_F12)==293);
   quitsdl();

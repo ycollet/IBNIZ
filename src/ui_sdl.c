@@ -970,6 +970,10 @@ void interactivemode(char*codetoload)
     {
       SDL_Keycode sym=e.key.key;
       SDL_Keymod mod=e.key.mod;
+      SDL_Keymod clipboardmod=SDL_KMOD_CTRL;
+#ifdef SDL_PLATFORM_MACOS
+      clipboardmod|=SDL_KMOD_GUI;
+#endif
       int ascii=playbackascii;
       if(sym==SDLK_RETURN || sym==SDLK_KP_ENTER) ascii=13;
       if(ui.opt_dumpkeys &&
@@ -1085,7 +1089,7 @@ void interactivemode(char*codetoload)
           ed_save();
         }
         else
-        if(sym==SDLK_C && (mod&SDL_KMOD_CTRL))
+        if(sym==SDLK_C && (mod&clipboardmod))
         {
           ed_copy();
         }
@@ -1095,19 +1099,19 @@ void interactivemode(char*codetoload)
           ed_copy();
         }
         else
-        if(sym==SDLK_V && (mod&SDL_KMOD_CTRL))
+        if(sym==SDLK_V && (mod&clipboardmod))
         {
           ed_paste();
           codechanged=1;
         }
         else
-        if(sym==SDLK_X && (mod&SDL_KMOD_CTRL))
+        if(sym==SDLK_X && (mod&clipboardmod))
         {
           ed_cut();
           codechanged=1;
         }
         else
-        if(sym==SDLK_A && (mod&SDL_KMOD_CTRL))
+        if(sym==SDLK_A && (mod&clipboardmod))
         {
           if(ed.selectbase) ed_unselect();
             else
